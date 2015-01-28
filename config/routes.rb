@@ -67,6 +67,8 @@ Rails.application.routes.draw do
 
       match 'documentation' => 'documentation#show'
 
+      match 'version' => 'version#show'
+
       resources :tokens, only: [:create, :destroy]
 
       resource  :current_site, controller: 'current_site', only: [:show, :update, :destroy]
@@ -87,7 +89,9 @@ Rails.application.routes.draw do
 
         api.resources :content_types
 
-        api.resources :content_entries, path: 'content_types/:slug/entries'
+        api.resources :content_entries, path: 'content_types/:slug/entries' do
+          delete :index, on: :collection, action: :destroy_all
+        end
 
         api.resources :theme_assets
 
@@ -109,24 +113,16 @@ Rails.application.routes.draw do
 
   # magic urls
   match '/_admin'               => 'locomotive/public/pages#show_toolbar'
-  match ':locale/_admin'        => 'locomotive/public/pages#show_toolbar', locale: /(#{Locomotive.config.site_locales.join('|')})/
-  match ':locale/*path/_admin'  => 'locomotive/public/pages#show_toolbar', locale: /(#{Locomotive.config.site_locales.join('|')})/
   match '*path/_admin'          => 'locomotive/public/pages#show_toolbar'
 
   match '/_edit'                => 'locomotive/public/pages#edit'
-  match ':locale/_edit'         => 'locomotive/public/pages#edit', page_path: 'index', locale: /(#{Locomotive.config.site_locales.join('|')})/
-  match ':locale/*path/_edit'   => 'locomotive/public/pages#edit', locale: /(#{Locomotive.config.site_locales.join('|')})/
   match '*path/_edit'           => 'locomotive/public/pages#edit'
 
   constraints Locomotive::Routing::PostContentEntryConstraint.new do
-    root to:                'locomotive/public/content_entries#create',     path: 'index'
-    match ':locale'         => 'locomotive/public/content_entries#create',  path: 'index', locale: /(#{Locomotive.config.site_locales.join('|')})/
-    match ':locale/*path'   => 'locomotive/public/content_entries#create',  locale: /(#{Locomotive.config.site_locales.join('|')})/
-    match '*path'           => 'locomotive/public/content_entries#create'
+    root to:                    'locomotive/public/content_entries#create',     path: 'index'
+    match '*path'               => 'locomotive/public/content_entries#create'
   end
 
   root to:                      'locomotive/public/pages#show'
-  match ':locale'               => 'locomotive/public/pages#show', page_path: 'index', locale: /(#{Locomotive.config.site_locales.join('|')})/
-  match ':locale/*path'         => 'locomotive/public/pages#show', locale: /(#{Locomotive.config.site_locales.join('|')})/
   match '*path'                 => 'locomotive/public/pages#show'
 end
